@@ -7,12 +7,12 @@ function register(path)
     target = abspath(path)
     (isfile(target) || isdir(target)) || 
                     error("Asset not found")
-    key = sha1(target)
+    key = getkey(target)
     registry[key] = target
     key
 end
 
-getkey(path) = sha1(abspath(path))
+getkey(path) =  bytes2hex(sha1(abspath(path))) * "-" * basename(path)
 isregistered(path) = haskey(registry, getkey(path))
 
 end # module
