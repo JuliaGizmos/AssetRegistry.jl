@@ -12,7 +12,7 @@ function register(path)
     key
 end
 
-getkey(path) =  bytes2hex(sha1(abspath(path))) * "-" * basename(path)
+getkey(path) =  "/assetserver/" * bytes2hex(sha1(abspath(path))) * "-" * basename(path)
 isregistered(path) = haskey(registry, getkey(path))
 
 end # module
