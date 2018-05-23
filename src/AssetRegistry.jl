@@ -1,10 +1,13 @@
 module AssetRegistry
+using SHA
 
 const registry = Dict{String,String}()
 
 function register(path)
-    key = sha1(abspath(path))
-    registry[key] = abspath(path) 
+    file = abspath(path)
+    isfile(file) || error("Asset not found")
+    key = sha1(file)
+    registry[key] = file
     key
 end
 
