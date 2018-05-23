@@ -12,5 +12,7 @@ function register(path)
     key
 end
 
+getkey(path) = sha1(abspath(path))
+isregistered(path) = haskey(registry, getkey(path))
 
 end # module
