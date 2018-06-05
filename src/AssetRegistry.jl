@@ -1,12 +1,11 @@
 module AssetRegistry
 using SHA
 using JSON
+using Pidfile
 
 const registry = Dict{String,String}()
 
-lockf(io) = ccall(:lockf, Int, (Int, Int, Int), fd(io), 1, 0)
-ulockf(io) = ccall(:lockf, Int, (Int, Int, Int), fd(io), 0, 0)
-withlock(f,io) = (lockf(io); f(); ulockf(io))
+withlock(f,lockf) = (lock=mkpidlock(lockf, stale_age=5); f(); close(lock))
 
 function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.json"))
     target = abspath(path)
@@ -22,10 +21,12 @@ function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.js
     # update global registry file
 
     touch(registry_file)
-    io = open(registry_file, "r+") # open in read-and-write mode
 
-    withlock(io) do
+    pidlock = joinpath(homedir(), ".jlassetregistry.lock")
 
+    withlock(pidlock) do
+
+        io = open(registry_file, "r+") # open in read-and-write mode
         # first get existing entries
         prev_registry =  filesize(io) > 0 ? JSON.parse(io) : Dict{String,Tuple{String,Int}}()
 
@@ -41,11 +42,11 @@ function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.js
 
         # truncate it to current length
         truncate(io, position(io))
+        close(io)
     end
 
     registry[key] = target # keep this in current process memory
 
-    close(io)
 
     key
 end
@@ -61,9 +62,10 @@ function deregister(path; registry_file = joinpath(homedir(), ".jlassetregistry.
     pop!(registry, key)
 
     touch(registry_file)
-    io = open(registry_file, "r+")
 
-    withlock(io) do
+    pidlock = joinpath(homedir(), ".jlassetregistry.lock")
+    withlock(pidlock) do
+        io = open(registry_file, "r+")
 
         # get existing information
         prev_registry =  filesize(io) > 0 ? JSON.parse(io) : Dict{String,Tuple{String, Int}}()
@@ -82,9 +84,8 @@ function deregister(path; registry_file = joinpath(homedir(), ".jlassetregistry.
 
         # truncate it to current length
         truncate(io, position(io))
+        close(io)
     end
-
-    close(io)
 
     key
 end
