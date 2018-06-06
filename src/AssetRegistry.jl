@@ -7,6 +7,19 @@ const registry = Dict{String,String}()
 
 withlock(f,lockf) = (lock=mkpidlock(lockf, stale_age=5); f(); close(lock))
 
+"""
+
+    register("path/to/asset")
+    
+    Register an asset. Returns a unique key which is 
+the unique URL where the asset can be accessed. 
+For example:
+
+```julia
+julia> key = AssetRegistry.register("/Users/ranjan/.julia/v0.6/Tachyons/assets/tachyons.min.css")
+"/assetserver/97a47bdda5bd9274ad1a9cd10a0337f3b033a790-tachyons.min.css"
+```
+"""
 function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.json"))
     target = abspath(path)
     (isfile(target) || isdir(target)) || 
