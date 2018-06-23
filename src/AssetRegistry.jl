@@ -1,3 +1,6 @@
+
+__precompile__()
+
 module AssetRegistry
 using SHA
 using JSON
