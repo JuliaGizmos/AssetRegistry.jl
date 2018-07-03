@@ -36,7 +36,11 @@ function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.js
 
     # update global registry file
 
-    touch(registry_file)
+    # touch(registry_file) -- this doesn't work on Azure fs
+    if !isfile(registry_file)
+        # WARN: may need a lock here
+        open(_->nothing, registry_file, "w")
+    end
 
     pidlock = joinpath(homedir(), ".jlassetregistry.lock")
 
