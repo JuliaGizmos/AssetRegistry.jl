@@ -1,4 +1,5 @@
 using AssetRegistry
+using Distributed
 ps = addprocs(1)
 
 @static if VERSION < v"0.7.0-DEV.2005"
