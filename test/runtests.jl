@@ -1,12 +1,10 @@
 ENV["JULIA_ASSETREGISTRY_BASEURL"] = "/mybasedir"
-@static if VERSION < v"0.7.0-DEV.2005"
-    using Base.Test
-else
-    using Distributed
-    using Test
-end
+
 using AssetRegistry
+using Distributed
 ps = addprocs(1)
+
+using Test
 
 using JSON
 
