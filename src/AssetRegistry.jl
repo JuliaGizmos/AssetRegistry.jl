@@ -4,9 +4,13 @@ using SHA
 using JSON
 using Pidfile
 
+const baseurl = Ref{String}("")
 const registry = Dict{String,String}()
 
 withlock(f,lockf) = (lock=mkpidlock(lockf, stale_age=5); f(); close(lock))
+
+# Need to remove the basepath for file database
+filekey(key) = key[length(baseurl[])+1:end]
 
 """
 
@@ -43,15 +47,15 @@ function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.js
     pidlock = joinpath(homedir(), ".jlassetregistry.lock")
 
     withlock(pidlock) do
-
+        fkey = filekey(key)
         io = open(registry_file, "r+") # open in read-and-write mode
         # first get existing entries
         prev_registry =  filesize(io) > 0 ? JSON.parse(io) : Dict{String,Tuple{String,Int}}()
 
-        if haskey(prev_registry, key)
-            prev_registry[key] = (target, prev_registry[key][2]+1) # increment ref count
+        if haskey(prev_registry, fkey)
+            prev_registry[fkey] = (target, prev_registry[fkey][2]+1) # increment ref count
         else
-            prev_registry[key] = (target, 1) # init refcount to 1
+            prev_registry[fkey] = (target, 1) # init refcount to 1
         end
 
         # write the updated registry to file
@@ -83,17 +87,18 @@ function deregister(path; registry_file = joinpath(homedir(), ".jlassetregistry.
 
     pidlock = joinpath(homedir(), ".jlassetregistry.lock")
     withlock(pidlock) do
+        fkey = filekey(key)
         io = open(registry_file, "r+")
 
         # get existing information
         prev_registry =  filesize(io) > 0 ? JSON.parse(io) : Dict{String,Tuple{String, Int}}()
 
-        if haskey(prev_registry, key)
-            val, count = prev_registry[key]
+        if haskey(prev_registry, fkey)
+            val, count = prev_registry[fkey]
             if count == 1
-                pop!(prev_registry, key)
+                pop!(prev_registry, fkey)
             else
-                prev_registry[key] = (val, count-1) # increment ref count
+                prev_registry[fkey] = (val, count-1) # increment ref count
             end
         end
 
@@ -108,11 +113,12 @@ function deregister(path; registry_file = joinpath(homedir(), ".jlassetregistry.
     key
 end
 
-getkey(path) =  "/assetserver/" * bytes2hex(sha1(abspath(path))) * "-" * basename(path)
+getkey(path) =  baseurl[] * "/assetserver/" * bytes2hex(sha1(abspath(path))) * "-" * basename(path)
 
 isregistered(path) = haskey(registry, getkey(path))
 
 function __init__()
+    baseurl[] = get(ENV, "JULIA_ASSETREGISTRY_BASEURL", get(ENV, "JUPYTERHUB_SERVICE_PREFIX", ""))
     atexit() do
         for (key, path) in AssetRegistry.registry
             AssetRegistry.deregister(path)
