@@ -21,7 +21,7 @@ using JSON
         -e 'using AssetRegistry; AssetRegistry.register(pwd());'
         ```)
 
-    # @test JSON.parse(String(read(joinpath(homedir(), ".jlassetregistry.json")))) == Dict(AssetRegistry.filekey(key) => [pwd(), 1])
+    @test JSON.parse(String(read(joinpath(homedir(), ".jlassetregistry.json")))) == Dict(AssetRegistry.filekey(key) => [pwd(), 1])
 
     AssetRegistry.deregister(pwd())
     @test !AssetRegistry.isregistered(pwd())
