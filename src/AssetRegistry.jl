@@ -15,9 +15,9 @@ filekey(key) = key[length(baseurl[])+1:end]
 """
 
     register("path/to/asset")
-    
-    Register an asset. Returns a unique key which is 
-the unique URL where the asset can be accessed. 
+
+    Register an asset. Returns a unique key which is
+the unique URL where the asset can be accessed.
 For example:
 
 ```julia
@@ -26,8 +26,8 @@ julia> key = AssetRegistry.register("/Users/ranjan/.julia/v0.6/Tachyons/assets/t
 ```
 """
 function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.json"))
-    target = abspath(path)
-    (isfile(target) || isdir(target)) || 
+    target = normpath(abspath(expanduser(path)))
+    (isfile(target) || isdir(target)) ||
                     error("Asset not found")
 
     key = getkey(target)
@@ -74,7 +74,7 @@ function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.js
 end
 
 function deregister(path; registry_file = joinpath(homedir(), ".jlassetregistry.json"))
-    target = abspath(path)
+    target = normpath(abspath(expanduser(path)))
 
     key = getkey(target)
     if !haskey(registry, key)
