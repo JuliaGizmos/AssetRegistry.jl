@@ -113,9 +113,15 @@ function deregister(path; registry_file = joinpath(homedir(), ".jlassetregistry.
     key
 end
 
-getkey(path) =  baseurl[] * "/assetserver/" * bytes2hex(sha1(abspath(path))) * "-" * basename(path)
+generatekey(path) =  baseurl[] * "/assetserver/" * bytes2hex(sha1(path)) * "-" * basename(path)
 
-isregistered(path) = haskey(registry, getkey(path))
+isregistered(path) = normpath(abspath(expanduser(path))) in values(registry)
+
+function getkey(path)
+    target = normpath(abspath(expanduser(path)))
+    key = findfirst(x -> x == target, registry)
+    key === nothing ? generatekey(path) : key
+end
 
 function __init__()
     baseurl[] = get(ENV, "JULIA_ASSETREGISTRY_BASEURL", get(ENV, "JUPYTERHUB_SERVICE_PREFIX", ""))
