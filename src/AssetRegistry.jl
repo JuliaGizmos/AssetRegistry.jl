@@ -1,7 +1,7 @@
 
 module AssetRegistry
 using SHA
-using JSON
+using JSON3
 using Pidfile
 
 const baseurl = Ref{String}("")
@@ -27,8 +27,7 @@ julia> key = AssetRegistry.register("/Users/ranjan/.julia/v0.6/Tachyons/assets/t
 """
 function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.json"))
     target = normpath(abspath(expanduser(path)))
-    (isfile(target) || isdir(target)) ||
-                    error("Asset not found")
+    (isfile(target) || isdir(target)) || error("Asset not found")
 
     key = getkey(target)
     if haskey(registry, key)
@@ -50,7 +49,8 @@ function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.js
         fkey = filekey(key)
         io = open(registry_file, "r+") # open in read-and-write mode
         # first get existing entries
-        prev_registry =  filesize(io) > 0 ? JSON.parse(io) : Dict{String,Tuple{String,Int}}()
+        DT = Dict{String,Tuple{String,Int}}
+        prev_registry =  filesize(io) > 0 ? JSON3.read(io, DT) : DT()
 
         if haskey(prev_registry, fkey)
             prev_registry[fkey] = (target, prev_registry[fkey][2]+1) # increment ref count
@@ -60,7 +60,7 @@ function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.js
 
         # write the updated registry to file
         seekstart(io)
-        JSON.print(io, prev_registry)
+        JSON3.write(io, prev_registry)
 
         # truncate it to current length
         truncate(io, position(io))
@@ -91,7 +91,8 @@ function deregister(path; registry_file = joinpath(homedir(), ".jlassetregistry.
         io = open(registry_file, "r+")
 
         # get existing information
-        prev_registry =  filesize(io) > 0 ? JSON.parse(io) : Dict{String,Tuple{String, Int}}()
+        DT = Dict{String,Tuple{String,Int}}
+        prev_registry =  filesize(io) > 0 ? JSON3.read(io, DT) : DT()
 
         if haskey(prev_registry, fkey)
             val, count = prev_registry[fkey]
@@ -103,7 +104,7 @@ function deregister(path; registry_file = joinpath(homedir(), ".jlassetregistry.
         end
 
         seekstart(io)
-        JSON.print(io, prev_registry)
+        JSON3.write(io, prev_registry)
 
         # truncate it to current length
         truncate(io, position(io))
