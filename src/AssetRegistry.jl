@@ -27,7 +27,9 @@ julia> key = AssetRegistry.register("/Users/ranjan/.julia/v0.6/Tachyons/assets/t
 """
 function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.json"))
     target = gettarget(path)
-    (isfile(target) || isdir(target)) || error("Asset not found")
+    if !ispath(target)
+        error("Asset not found")
+    end
 
     key = getkey(target)
     if haskey(registry, key)
