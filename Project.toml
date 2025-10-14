@@ -13,3 +13,8 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "Distributed"]
+
+[compat]
+JSON = "0.0.0 - 0.21, 1"
+Pidfile = "1"
+julia = "0.7, 1"

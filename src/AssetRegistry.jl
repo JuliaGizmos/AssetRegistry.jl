@@ -4,6 +4,13 @@ using SHA
 using JSON
 using Pidfile
 
+# define parsejson to handle different versions of JSON.jl
+parsejson(x) = @static if isdefined(JSON, :Object)
+    JSON.parse(x, dicttype=Dict{String,Any})
+else
+    JSON.parse(x)
+end
+
 const baseurl = Ref{String}("")
 const registry = Dict{String,String}()
 
@@ -50,7 +57,7 @@ function register(path; registry_file = joinpath(homedir(), ".jlassetregistry.js
         fkey = filekey(key)
         io = open(registry_file, "r+") # open in read-and-write mode
         # first get existing entries
-        prev_registry =  filesize(io) > 0 ? JSON.parse(io) : Dict{String,Tuple{String,Int}}()
+        prev_registry =  filesize(io) > 0 ? parsejson(io) : Dict{String,Tuple{String,Int}}()
 
         if haskey(prev_registry, fkey)
             prev_registry[fkey] = (target, prev_registry[fkey][2]+1) # increment ref count
@@ -91,7 +98,7 @@ function deregister(path; registry_file = joinpath(homedir(), ".jlassetregistry.
         io = open(registry_file, "r+")
 
         # get existing information
-        prev_registry =  filesize(io) > 0 ? JSON.parse(io) : Dict{String,Tuple{String, Int}}()
+        prev_registry =  filesize(io) > 0 ? parsejson(io) : Dict{String,Tuple{String, Int}}()
 
         if haskey(prev_registry, fkey)
             val, count = prev_registry[fkey]
