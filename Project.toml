@@ -17,4 +17,4 @@ test = ["Test", "Distributed"]
 [compat]
 JSON = "0.0.0 - 0.21, 1"
 Pidfile = "1"
-julia = "0.7, 1"
+julia = "1"
